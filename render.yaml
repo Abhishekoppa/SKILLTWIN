@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: skilltwin-api
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: skilltwin-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PRISMTRACE_API_KEY
+        sync: false
+      - key: PRISMTRACE_PROJECT_ID
+        sync: false
+
+databases:
+  - name: skilltwin-db
+    databaseName: skilltwin
+    user: skilltwin_user
+
