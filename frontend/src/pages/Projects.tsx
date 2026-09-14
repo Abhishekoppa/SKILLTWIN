@@ -27,10 +27,10 @@ export default function Projects() {
         
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Connect Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Evidence</span>
+            Connect Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">GitHub</span>
           </h1>
           <p className="text-lg text-slate-600">
-            Claims are cheap. Actual code is undeniable. Connect your external profiles so SkillTwin can build a grounded, verified model of your capabilities.
+            Link your GitHub account so SkillTwin can automatically find real code evidence for your skills.
           </p>
         </div>
 
@@ -44,9 +44,9 @@ export default function Projects() {
               <div className="w-16 h-16 bg-slate-900 text-white rounded-xl flex items-center justify-center mb-6 shadow-sm">
                 <Code className="w-8 h-8" />
               </div>
-              <CardTitle className="text-3xl">GitHub Evidence Integration</CardTitle>
+              <CardTitle className="text-3xl">Connect GitHub</CardTitle>
               <CardDescription className="text-lg text-slate-500 max-w-2xl">
-                Automatically scan your public repositories, READMEs, and tech stack to ground your self-reported skills in actual, verifiable code evidence.
+                We'll scan your public repositories to prove you actually know how to code.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 relative z-10 pt-4">
