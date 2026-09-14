@@ -37,10 +37,10 @@ export default function Landing() {
                 <ShieldCheck className="w-4 h-4" /> Powered by PRISM Governance, Sarvam AI & Groq Whisper
               </div>
               <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1]">
-                Your Dynamic, Evidence-Based <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Skill Twin</span>
+                Your Resume Gets You the Interview. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Your Skills Get You the Job.</span>
               </h1>
               <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
-                We believe that resumes only tell half the story. SkillTwin builds a mathematically proven digital twin of your capabilities by reading your resume, verifying your GitHub code, and rigorously testing you through a live, adaptive Voice AI technical interview.
+                An AI-powered interview simulator that actually knows YOU. SkillTwin builds a mathematically proven digital twin of your capabilities by reading your resume, verifying your GitHub code, and rigorously testing you through a live, adaptive Voice AI technical interview.
               </p>
               <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <Link to="/register">
