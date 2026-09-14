@@ -13,6 +13,7 @@ router = APIRouter()
 async def upload_resume(
     file: UploadFile = File(...),
     target_role: str = Form(""),
+    github_url: str = Form(""),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -41,12 +42,15 @@ async def upload_resume(
     from app.models.candidate import CandidateProfile, Skill, CandidateSkill
     profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == current_user.id).first()
     if not profile:
-        profile = CandidateProfile(user_id=current_user.id, target_role=target_role)
+        profile = CandidateProfile(user_id=current_user.id, target_role=target_role, github_url=github_url)
         db.add(profile)
         db.commit()
         db.refresh(profile)
-    elif target_role:
-        profile.target_role = target_role
+    else:
+        if target_role:
+            profile.target_role = target_role
+        if github_url:
+            profile.github_url = github_url
         db.commit()
     
     for skill_name in parsed_data.skills:

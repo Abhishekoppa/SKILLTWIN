@@ -4,12 +4,10 @@ import { sourcesApi } from "../api/sources";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Code as Github, Globe as Linkedin, Loader2, Code, ShieldCheck } from "lucide-react";
+import { Code as Github, Loader2, Code, ShieldCheck } from "lucide-react";
 
 export default function Projects() {
   const [githubInput, setGithubInput] = useState("");
-  const [linkedinText, setLinkedinText] = useState("");
-
   const githubMutation = useMutation({
     mutationFn: () => {
       // Parse URL or just username
@@ -21,12 +19,6 @@ export default function Projects() {
     },
     onSuccess: (data) => alert(`Awesome! Extracted ${data.findings_count} verifiable evidence points from repositories.`),
     onError: (err: any) => alert(err.response?.data?.detail || "Failed to analyze GitHub"),
-  });
-
-  const linkedinMutation = useMutation({
-    mutationFn: () => sourcesApi.analyzeLinkedin(linkedinText),
-    onSuccess: (data) => alert(`Awesome! Extracted ${data.skills_found} claimed skills.`),
-    onError: (err: any) => alert(err.response?.data?.detail || "Failed to analyze LinkedIn"),
   });
 
   return (
@@ -44,22 +36,22 @@ export default function Projects() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* GitHub Card */}
-          <Card className="shadow-lg border-0 ring-1 ring-slate-200 hover:ring-indigo-300 hover:shadow-xl transition-all overflow-hidden relative group bg-white">
+          <Card className="shadow-lg border-0 ring-1 ring-slate-200 hover:ring-indigo-300 hover:shadow-xl transition-all overflow-hidden relative group bg-white md:col-span-2 max-w-4xl mx-auto w-full">
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Github className="w-32 h-32 text-slate-900" />
+              <Github className="w-64 h-64 text-slate-900" />
             </div>
             <CardHeader className="pb-4">
-              <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center mb-6 shadow-sm">
-                <Code className="w-6 h-6" />
+              <div className="w-16 h-16 bg-slate-900 text-white rounded-xl flex items-center justify-center mb-6 shadow-sm">
+                <Code className="w-8 h-8" />
               </div>
-              <CardTitle className="text-2xl">GitHub Analysis</CardTitle>
-              <CardDescription className="text-base text-slate-500">
-                Automatically scan your public repositories, READMEs, and tech stack to ground your skills in actual code.
+              <CardTitle className="text-3xl">GitHub Evidence Integration</CardTitle>
+              <CardDescription className="text-lg text-slate-500 max-w-2xl">
+                Automatically scan your public repositories, READMEs, and tech stack to ground your self-reported skills in actual, verifiable code evidence.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-5 relative z-10">
-              <div className="space-y-2">
-                <label htmlFor="github" className="text-sm font-semibold text-slate-700">
+            <CardContent className="space-y-6 relative z-10 pt-4">
+              <div className="space-y-3">
+                <label htmlFor="github" className="text-base font-semibold text-slate-700">
                   GitHub Username or URL
                 </label>
                 <div className="relative">
@@ -68,66 +60,23 @@ export default function Projects() {
                     placeholder="e.g. torvalds or https://github.com/torvalds" 
                     value={githubInput} 
                     onChange={(e) => setGithubInput(e.target.value)}
-                    className="pl-10 h-12 bg-slate-50 border-slate-200 focus:bg-white"
+                    className="pl-12 h-14 text-lg bg-slate-50 border-slate-200 focus:bg-white transition-all shadow-inner"
                   />
-                  <Github className="absolute left-3 top-3.5 w-5 h-5 text-slate-400" />
+                  <Github className="absolute left-4 top-4 w-6 h-6 text-slate-400" />
                 </div>
+                <p className="text-sm text-slate-500">We will analyze your top 5 most recently updated public repositories.</p>
               </div>
             </CardContent>
-            <CardFooter className="bg-slate-50 border-t py-4 relative z-10">
+            <CardFooter className="bg-slate-50 border-t py-6 relative z-10">
               <Button 
                 onClick={() => githubMutation.mutate()} 
                 disabled={!githubInput || githubMutation.isPending}
-                className="w-full h-12 text-base font-semibold shadow-sm"
+                className="w-full sm:w-auto px-10 h-14 text-lg font-bold shadow-md hover:shadow-lg transition-all"
               >
                 {githubMutation.isPending ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Mining Repositories...</>
+                  <><Loader2 className="w-6 h-6 mr-2 animate-spin" /> Mining Repositories...</>
                 ) : (
-                  <><ShieldCheck className="w-5 h-5 mr-2" /> Verify Repositories</>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* LinkedIn Card */}
-          <Card className="shadow-lg border-0 ring-1 ring-slate-200 hover:ring-blue-300 hover:shadow-xl transition-all overflow-hidden relative group bg-white">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Linkedin className="w-32 h-32 text-blue-600" />
-            </div>
-            <CardHeader className="pb-4">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-6 shadow-sm">
-                <Linkedin className="w-6 h-6" />
-              </div>
-              <CardTitle className="text-2xl">LinkedIn Claims</CardTitle>
-              <CardDescription className="text-base text-slate-500">
-                Paste your LinkedIn about or experience section to extract the skills you claim to have.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5 relative z-10">
-              <div className="space-y-2">
-                <label htmlFor="linkedin" className="text-sm font-semibold text-slate-700">
-                  Profile Text
-                </label>
-                <textarea 
-                  id="linkedin" 
-                  placeholder="Paste your LinkedIn 'About' or 'Experience' descriptions here..." 
-                  value={linkedinText} 
-                  onChange={(e) => setLinkedinText(e.target.value)}
-                  className="flex min-h-[140px] w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="bg-slate-50 border-t py-4 relative z-10">
-              <Button 
-                onClick={() => linkedinMutation.mutate()} 
-                disabled={!linkedinText || linkedinMutation.isPending}
-                className="w-full h-12 text-base font-semibold shadow-sm"
-                variant="outline"
-              >
-                {linkedinMutation.isPending ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Extracting Skills...</>
-                ) : (
-                  "Extract Claimed Skills"
+                  <><ShieldCheck className="w-6 h-6 mr-2" /> Verify Repositories</>
                 )}
               </Button>
             </CardFooter>

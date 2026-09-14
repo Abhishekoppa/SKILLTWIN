@@ -22,6 +22,7 @@ def parse_resume_with_llm(raw_text: str, target_role: str = "") -> ParsedResumeD
     llm = ChatGroq(
         model=settings.LLM_MODEL,  # Back to settings.LLM_MODEL to prevent 404
         temperature=0.1,
+        max_tokens=4096,
         api_key=settings.LLM_API_KEY,
     )
     
@@ -33,7 +34,8 @@ def parse_resume_with_llm(raw_text: str, target_role: str = "") -> ParsedResumeD
     prompt = f"""
     You are an expert technical recruiter and resume analyzer.
     Extract the structured information from the provided resume text.
-    Be precise. If a field is not found, leave it empty or omit it.
+    Be precise and VERY CONCISE in your descriptions to prevent output truncation. Keep all text fields short.
+    If a field is not found, leave it empty or omit it.
     {role_context}
     
     Resume Text:

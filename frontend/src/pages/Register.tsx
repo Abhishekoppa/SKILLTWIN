@@ -16,6 +16,7 @@ import { Input } from "../components/ui/input";
 import { BrainCircuit, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
+  name: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string()
@@ -31,6 +32,7 @@ export default function Register() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -39,7 +41,7 @@ export default function Register() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await register(values);
+      await register({ email: values.email, password: values.password, full_name: values.name });
       navigate("/dashboard");
     } catch (error: any) {
       console.error(error);
@@ -74,6 +76,19 @@ export default function Register() {
           <div className="mt-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-700 font-semibold">Full Name</FormLabel>
+                      <FormControl>
+                        <Input className="h-12 bg-slate-50" placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"

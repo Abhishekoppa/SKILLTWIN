@@ -18,3 +18,5 @@ class NextQuestion(BaseModel):
     topic: str
     difficulty_level: int
     mode: str
+    is_coding_question: bool = Field(default=False, description="True if the user needs to write code")
+    time_limit_seconds: int = Field(default=90, description="1min30sec (90s) for conceptual, 300s for basic coding, 600s for advanced coding")

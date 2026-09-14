@@ -10,6 +10,7 @@ class CandidateProfile(Base):
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     resume_id = Column(Integer, ForeignKey("resumes.id"), nullable=True)
     target_role = Column(String, nullable=True)
+    github_url = Column(String, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

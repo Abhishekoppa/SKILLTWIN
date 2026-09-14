@@ -1,10 +1,13 @@
 from typing import TypedDict, Annotated, Sequence
 import operator
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+import os
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, END
 from app.core.config import settings
 from app.schemas.interview import AnswerEvaluation, NextQuestion
+from app.integrations.prism import prism_client, AIEvent
+from prismtrace import PRISMtraceLangGraphHandler, wrap_langgraph
 
 class InterviewState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
@@ -13,24 +16,42 @@ class InterviewState(TypedDict):
     max_questions: int
     current_difficulty: int
     last_evaluation: AnswerEvaluation | None
+    session_id: str
+    candidate_name: str
+    mode: str
 
-from app.integrations.prism import prism_client, AIEvent
+import prismtrace
+from prismtrace import PRISMtraceCallbackHandler
+from dotenv import load_dotenv
 
-from langchain_core.messages import SystemMessage
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
+
+# Build the handler ONCE, at startup, as per the brief.
+prism_handler = PRISMtraceCallbackHandler(
+    api_key=os.environ.get("PRISMTRACE_API_KEY", "dummy_key"),
+    project_id=os.environ.get("PRISMTRACE_PROJECT_ID", "dummy_project"),
+    host=os.environ.get("PRISMTRACE_HOST", "https://prism-api-prod.up.railway.app")
+)
 
 def evaluate_answer_node(state: InterviewState):
     """Evaluates the candidate's last answer."""
-    llm = ChatGroq(model=settings.LLM_MODEL, temperature=0, api_key=settings.LLM_API_KEY)
+    llm = ChatGroq(model=settings.LLM_MODEL, temperature=0, api_key=settings.LLM_API_KEY, callbacks=[prism_handler])
     structured_llm = llm.with_structured_output(AnswerEvaluation)
     
     messages = state['messages']
     question = messages[-2].content if len(messages) >= 2 else ""
     answer = messages[-1].content
     
-    sys_msg = SystemMessage(content="You are an expert technical interviewer. Evaluate the candidate's answer. You MUST use the provided tool to output your response.")
+    sys_msg = SystemMessage(content="You are an expert technical interviewer. Evaluate the candidate's answer carefully. Assess correctness, depth, reasoning, and communication. Be highly objective and constructive in your feedback.")
     human_msg = HumanMessage(content=f"Question: {question}\nAnswer: {answer}\nProvide a structured evaluation.")
     
-    evaluation = structured_llm.invoke([sys_msg, human_msg])
+    session_name = state.get("session_id", "skilltwin-interview-eval")
+    meta = {"candidate_name": state.get("candidate_name", "Unknown"), "mode": state.get("mode", "Conceptual")}
+    
+    with prismtrace.session(session_name):
+        evaluation = structured_llm.invoke([sys_msg, human_msg], config={"callbacks": [prism_handler], "metadata": meta})
+        
+    prism_handler.flush()
     
     # PRISM Governance for Evaluation
     event = AIEvent(
@@ -52,32 +73,45 @@ def difficulty_controller_node(state: InterviewState):
     eval = state['last_evaluation']
     curr_diff = state['current_difficulty']
     
-    if eval.overall >= 85:
+    if eval.overall >= 80:
         curr_diff = min(curr_diff + 1, 6)
-    elif eval.overall < 50:
+    elif eval.overall < 60:
         curr_diff = max(curr_diff - 1, 1)
         
     return {"current_difficulty": curr_diff}
 
 def question_generator_node(state: InterviewState):
     """Generates the next question."""
-    llm = ChatGroq(model=settings.LLM_MODEL, temperature=0.7, api_key=settings.LLM_API_KEY)
+    llm = ChatGroq(model=settings.LLM_MODEL, temperature=0.7, api_key=settings.LLM_API_KEY, callbacks=[prism_handler])
     structured_llm = llm.with_structured_output(NextQuestion)
     
-    sys_msg = SystemMessage(content="You are an expert technical interviewer. Generate the next interview question tailored to the candidate's actual projects or skills. You MUST use the provided tool to output your response.")
+    sys_msg = SystemMessage(content="You are an expert technical interviewer. Generate the next interview question tailored to the candidate's actual projects or skills. The question MUST be short, crisp, and straight to the point (under 3 sentences). Do not use verbose pleasantries.")
     human_msg = HumanMessage(content=f"Candidate Context: {state['candidate_profile_context']}\nCurrent Difficulty Level: {state['current_difficulty']}/6\nPrevious Feedback: {state['last_evaluation'].feedback if state.get('last_evaluation') else 'None'}\nGenerate the next question now.")
     
     # Simple retry loop for governance
     max_retries = settings.MAX_LLM_RETRIES
     next_q = None
+    
+    session_name = state.get("session_id", "skilltwin-interview-gen")
+    meta = {"candidate_name": state.get("candidate_name", "Unknown"), "mode": state.get("mode", "Conceptual")}
+
     for attempt in range(max_retries):
         try:
-            next_q = structured_llm.invoke([sys_msg, human_msg])
+            with prismtrace.session(session_name):
+                next_q = structured_llm.invoke([sys_msg, human_msg], config={"callbacks": [prism_handler], "metadata": meta})
+            prism_handler.flush()
         except Exception as e:
             print(f"LLM Tool Error on attempt {attempt+1}: {e}")
             if attempt == max_retries - 1:
                 # Fallback on absolute failure
-                next_q = NextQuestion(question_text="Could you describe a challenging technical problem you solved recently?", rationale="Fallback due to LLM error")
+                next_q = NextQuestion(
+                    question_text="Could you describe a challenging technical problem you solved recently?", 
+                    topic="General Experience",
+                    difficulty_level=state['current_difficulty'],
+                    mode="Conceptual",
+                    is_coding_question=False,
+                    time_limit_seconds=90
+                )
             continue
             
         # PRISM Governance for Question Generation
@@ -94,7 +128,14 @@ def question_generator_node(state: InterviewState):
             break
         print(f"Governance rejected question, regenerating (Attempt {attempt+1}): {gov_result.reason}")
         if attempt == max_retries - 1:
-             next_q = NextQuestion(question_text="Could you describe a challenging technical problem you solved recently?", rationale="Fallback due to Governance failure")
+             next_q = NextQuestion(
+                 question_text="Could you describe a challenging technical problem you solved recently?", 
+                 topic="General Experience",
+                 difficulty_level=state['current_difficulty'],
+                 mode="Conceptual",
+                 is_coding_question=False,
+                 time_limit_seconds=90
+             )
     
     return {
         "messages": [AIMessage(content=next_q.question_text)],

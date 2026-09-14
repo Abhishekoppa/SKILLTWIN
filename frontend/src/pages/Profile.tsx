@@ -2,8 +2,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { profileApi } from "../api/profile";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Profile() {
+  const { user } = useAuth();
   const { data: profile, isLoading, refetch } = useQuery({
     queryKey: ["skillTwin"],
     queryFn: profileApi.getSkillTwin,
@@ -17,15 +19,19 @@ export default function Profile() {
   });
 
   if (isLoading) {
-    return <div className="p-8 text-center">Loading Profile...</div>;
+    return <div className="p-8 text-center text-slate-500 animate-pulse">Loading Profile Data...</div>;
   }
 
+  const username = user?.email?.split('@')[0] || "Candidate";
+
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-start mb-8">
+    <div className="container mx-auto py-12 px-4 max-w-6xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-3xl font-bold">Candidate SkillTwin</h1>
-          <p className="text-muted-foreground mt-1">Your dynamic evidence-based skill model</p>
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
+            <span className="text-primary">{username}'s</span> SkillTwin
+          </h1>
+          <p className="text-lg text-slate-600 mt-2">Your mathematically proven, evidence-based capabilities model.</p>
           {profile?.target_role && (
             <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold">
               🎯 Target Role: {profile.target_role}
@@ -78,17 +84,17 @@ export default function Profile() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Claimed (Resume/LI)</span>
-                    <span className="font-medium">{cs.claimed_confidence ? `${cs.claimed_confidence}%` : 'N/A'}</span>
+                  <div className="flex justify-between items-center bg-slate-50 p-2 rounded-md">
+                    <span className="text-slate-600 font-medium">Claimed (Resume)</span>
+                    <span className="font-bold text-slate-900">{cs.claimed_confidence ? `${cs.claimed_confidence}%` : 'N/A'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Evidence (GitHub)</span>
-                    <span className="font-medium">{cs.evidence_confidence ? `${cs.evidence_confidence}%` : 'N/A'}</span>
+                  <div className="flex justify-between items-center bg-slate-50 p-2 rounded-md">
+                    <span className="text-slate-600 font-medium">Evidence (GitHub)</span>
+                    <span className="font-bold text-slate-900">{cs.evidence_confidence ? `${cs.evidence_confidence}%` : 'N/A'}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Demonstrated (Interview)</span>
-                    <span className="font-medium text-primary">{cs.demonstrated_score ? `${cs.demonstrated_score}%` : 'N/A'}</span>
+                  <div className="flex justify-between items-center bg-primary/5 p-2 rounded-md border border-primary/10">
+                    <span className="text-primary font-bold">Demonstrated (Interview)</span>
+                    <span className="font-black text-primary text-lg">{cs.demonstrated_score ? `${cs.demonstrated_score}%` : 'N/A'}</span>
                   </div>
                 </div>
               </CardContent>

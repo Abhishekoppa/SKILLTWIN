@@ -9,6 +9,7 @@ import { UploadCloud, CheckCircle2, AlertCircle, FileText, Loader2, History, Clo
 export default function ResumeUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [targetRole, setTargetRole] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -67,6 +68,9 @@ export default function ResumeUpload() {
     if (targetRole) {
       formData.append("target_role", targetRole);
     }
+    if (githubUrl) {
+      formData.append("github_url", githubUrl);
+    }
 
     try {
       await apiClient.post("/resumes/", formData, {
@@ -107,6 +111,17 @@ export default function ResumeUpload() {
                 className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               <p className="text-sm text-slate-500">We'll calculate an ATS match score based on this role.</p>
+            </div>
+            <div className="space-y-3 text-left">
+              <label className="text-sm font-semibold text-slate-700">GitHub Profile URL (Optional)</label>
+              <input 
+                type="text" 
+                placeholder="https://github.com/username" 
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="text-sm text-slate-500">We'll scan your repos to adapt your interview questions.</p>
             </div>
             <div 
               className={`relative flex flex-col items-center justify-center w-full h-72 border-2 border-dashed rounded-xl transition-all duration-300 ease-in-out ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400'} ${file && !error ? 'border-green-400 bg-green-50/50' : ''}`}

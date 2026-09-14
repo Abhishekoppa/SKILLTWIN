@@ -12,5 +12,16 @@ export const interviewApi = {
       answer_text: answerText
     });
     return response.data;
+  },
+  
+  transcribeAudio: async (audioBlob: Blob, filename: string) => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, filename);
+    const response = await apiClient.post('/interviews/transcribe', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 };
